@@ -27,5 +27,7 @@ private:
     int timerId2;
     QLineSeries *Line1;
     QChart *chart;
+    int FrontSec = 30;
+    int BackSec = -120;
 };
 #endif // EMMA2_H
