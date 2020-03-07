@@ -3,6 +3,8 @@
 
 #include <QMainWindow>
 #include <QtCharts>
+#include "chartsetmodel.h"
+#include "chartset.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class Emma2; }
@@ -17,17 +19,22 @@ public:
     ~Emma2();
     void timerEvent(QTimerEvent *e) override;
     void iniChart();
+    void iniSignal_Slot();
 
 private slots:
-    void on_btnSuit_clicked();
+
+    void on_actionChart_triggered();
+    void chartsetprocess(chartsetmodel &);
+
 
 private:
     Ui::Emma2 *ui;
     int timerId;
     int timerId2;
+    QDateTimeAxis *axis_x;
+    QValueAxis *axis_y;
     QLineSeries *Line1;
     QChart *chart;
-    int FrontSec = 30;
-    int BackSec = -120;
+    chartset *nchartset = nullptr;
 };
 #endif // EMMA2_H

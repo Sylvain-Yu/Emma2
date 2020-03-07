@@ -11,12 +11,20 @@ Emma2::Emma2(QWidget *parent)
     timerId = startTimer(500);
     timerId2 = startTimer(700);
     iniChart();
+    iniSignal_Slot();
 }
 
 Emma2::~Emma2()
 {
     delete ui;
 }
+
+
+void Emma2::iniSignal_Slot()
+{
+
+}
+
 
 void Emma2::timerEvent(QTimerEvent *e)
 {
@@ -26,11 +34,13 @@ void Emma2::timerEvent(QTimerEvent *e)
         QDateTime now(QDateTime::currentDateTime());
         Line1->setName("line1");
         Line1->append(now.toMSecsSinceEpoch(),rand);
-//        qDebug() << now << ":"<<rand;
     }
     else if (e->timerId() == timerId2)
     {
-//        qDebug() << "bb";
+//        qreal rand = qrand()/1000.0;
+//        QDateTime now(QDateTime::currentDateTime());
+//        Line1->setName("line1");
+//        Line1->append(now.toMSecsSinceEpoch(),rand);
     }
 }
 
@@ -38,58 +48,72 @@ void Emma2::iniChart()
 {
     chart = new QChart();
     ui->chart->setChart(chart);
-
-    auto axis_x = new QDateTimeAxis();
-    axis_x->setRange(QDateTime::currentDateTime().addSecs(-20),QDateTime::currentDateTime().addSecs(100));
+    // 初始化x轴
+    axis_x = new QDateTimeAxis();
+    axis_x->setRange(QDateTime::currentDateTime()
+                     ,QDateTime::currentDateTime().addSecs(60));
     axis_x->setFormat("mm:ss");
-    axis_x->setTickCount(4);
+    axis_x->setTickCount(5);
     axis_x->setTitleText("time");
-
-    auto axis_y = new QValueAxis();
+    // 初始化y轴
+    axis_y = new QValueAxis();
     axis_y->setRange(0,100);
     axis_y->setTickCount(10);
     axis_y->setTitleText("value");
 
-
-    Line1 = new QLineSeries();
-    Line1->setName("line1");
-
-
-    chart->addSeries(Line1);
+    // 坐标轴关联
     chart->addAxis(axis_x,Qt::AlignBottom);
     chart->addAxis(axis_y,Qt::AlignLeft);
-    Line1->attachAxis(axis_x);
-    Line1->attachAxis(axis_y);
+
     ui->chart->setRubberBand(QChartView::RectangleRubberBand);
     ui->chart->setRenderHint(QPainter::Antialiasing);
 
-    ui->HBar1->setValue(50);
+    Line1 = new QLineSeries();
+    Line1->setName("line1");
+    Line1->setVisible(true);
 
+    chart->addSeries(Line1);
+    Line1->attachAxis(axis_x);
+    Line1->attachAxis(axis_y);
 }
 
-void Emma2::on_btnSuit_clicked()
+
+void Emma2::chartsetprocess(chartsetmodel & model)
 {
-    QDateTimeAxis * axis_x = dynamic_cast<QDateTimeAxis *>(chart->axes(Qt::Horizontal,Line1).at(0));
-//    qDebug() <<"max" <<axis_x->max()<<"min"<< axis_x->min();
-
-        QDateTime xmin = QDateTime::currentDateTime().addSecs(BackSec);
-        QDateTime xmax = QDateTime::currentDateTime().addSecs(FrontSec);
-        axis_x->setRange(xmin, xmax);
-        const auto vectorPoints = Line1->pointsVector();
-
-        QVector<qreal> tempvector;
-        for(const QPointF points: vectorPoints)
-        {
-            if (points.x() >= xmin.toMSecsSinceEpoch())
-            {
-                tempvector.push_back(points.y());
-            }
-        }
-        auto current_ymax = std::max_element(std::begin(tempvector),std::end(tempvector));
-        auto current_ymin = std::min_element(std::begin(tempvector),std::end(tempvector));
-        QValueAxis * axis_y = dynamic_cast<QValueAxis*>(chart->axes(Qt::Vertical,Line1).at(0));
+    ui->statusbar->showMessage("Chart Parameter Changed",200);
+    axis_x->setRange(QDateTime::currentDateTime().addSecs(model.getStartSec())
+                     ,QDateTime::currentDateTime().addSecs(model.getEndSec()));
+    axis_y->setRange(model.getYmin(),model.getYmax());
+}
+//        const auto vectorPoints = Line1->pointsVector();
+//        QVector<qreal> tempvector;
+//        for(const QPointF points: vectorPoints)
+//        {
+//            if (points.x() >= xmin.toMSecsSinceEpoch())
+//            {
+//                tempvector.push_back(points.y());
+//            }
+//        }
+//        auto current_ymax = std::max_element(std::begin(tempvector),std::end(tempvector));
+//        auto current_ymin = std::min_element(std::begin(tempvector),std::end(tempvector));
+//
 //        qDebug() << *current_ymax;
-        axis_y->setRange(*current_ymin, (*current_ymax)*1.25);
-        ui->statusbar->showMessage("btn pushed",500);
+//        axis_y->setRange(*current_ymin, (*current_ymax)*1.25);
+//        ui->statusbar->showMessage("btn pushed",500);
 
+void Emma2::on_actionChart_triggered()
+{
+    if (nchartset == nullptr)
+    {
+        nchartset = new chartset;
+        nchartset->setWindowTitle("Chart Setting");
+        nchartset->setWindowIcon(QIcon(":/icon/Image/setting.png"));
+        nchartset->show();
+    }
+    else
+    {
+        nchartset->show();
+    }
+    // transfer the information to this.
+    connect(nchartset,&chartset::applied,this,&Emma2::chartsetprocess);
 }
